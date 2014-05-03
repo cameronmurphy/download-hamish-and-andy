@@ -186,8 +186,8 @@ class HamishAndAndyPodcastScrubber():
     def fix_podcast_date(self, podcast):
         title_date = self.search_and_parse_date(podcast['title'])
 
-        if title_date is not None and title_date.day != podcast['release_date'].day and \
-                title_date.month != podcast['release_date'].month:
+        if title_date is not None and (title_date.day != podcast['release_date'].day or
+                                       title_date.month != podcast['release_date'].month):
 
             warning_message = 'Warning: overriding date %s of episode \'%s\' (%d) with parsed date from title: %s' % \
                               (podcast['release_date'].strftime('%Y-%m-%d'),
@@ -202,18 +202,17 @@ class HamishAndAndyPodcastScrubber():
         if 'body' in podcast:
             body_date = self.search_and_parse_date(podcast['body'])
 
-            if body_date is not None:
-                if body_date.day != podcast['release_date'].day or body_date.month != podcast['release_date'].month:
+            if body_date and (body_date.day != podcast['release_date'].day or
+                              body_date.month != podcast['release_date'].month):
+                warning_message = 'Warning: overriding date %s of episode \'%s\' (%d) with date from body: %s' % \
+                                  (podcast['release_date'].strftime('%Y-%m-%d'),
+                                   podcast['title'],
+                                   podcast['id'],
+                                   body_date.strftime('%d/%m'))
 
-                    warning_message = 'Warning: overriding date %s of episode \'%s\' (%d) with date from body: %s' % \
-                                      (podcast['release_date'].strftime('%Y-%m-%d'),
-                                       podcast['title'],
-                                       podcast['id'],
-                                       body_date.strftime('%d/%m'))
+                print self.RED_TEXT_ESCAPE_SEQUENCE % warning_message
 
-                    print self.RED_TEXT_ESCAPE_SEQUENCE % warning_message
-
-                    podcast['release_date'] = podcast['release_date'].replace(day=body_date.day, month=body_date.month)
+                podcast['release_date'] = podcast['release_date'].replace(day=body_date.day, month=body_date.month)
 
         # If after all this, the podcast falls on a Saturday or Sunday... be suspicous
         if podcast['release_date'].weekday() >= 5:
