@@ -145,7 +145,8 @@ class HamishAndAndyPodcastScrubber():
                  '(?:(?:\d{1,2}){1,2}(?:st|nd|rd|th)?)? ?' + \
                  '(?:\d{4})?)'
 
-    NAME_WITH_DATE_REGEX = '(?:Best of )? ?%s(.*)' % DATE_REGEX
+    NAME_WITH_DATE_REGEX = '(?:Best [Oo]f )? ?%s(.*)' % DATE_REGEX
+    PODCAST_RETURNS_REGEX = 'Podcast Returns'
 
     EPISODES_WITH_CORRECT_DATES = [2652979, 2461292, 2231202]
     EPISODE_DATE_OVERRIDES = {2744131: '2014-03-21'}
@@ -240,8 +241,11 @@ class HamishAndAndyPodcastScrubber():
         for podcast in podcasts:
             if podcast['id'] in self.EPISODE_DATE_OVERRIDES:
                 self.override_date(podcast, self.EPISODE_DATE_OVERRIDES[podcast['id']])
-            elif podcast['id'] not in self.EPISODES_WITH_CORRECT_DATES:
-                self.fix_podcast_date(podcast)
+            else:
+                podcast_returns_match = re.search(self.PODCAST_RETURNS_REGEX, podcast['title'])
+
+                if podcast_returns_match is None and podcast['id'] not in self.EPISODES_WITH_CORRECT_DATES:
+                    self.fix_podcast_date(podcast)
 
             self.cleanup_title(podcast)
 
