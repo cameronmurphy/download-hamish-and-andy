@@ -176,7 +176,10 @@ class HamishAndAndyPodcastScrubber():
                     try:
                         date = datetime.strptime(parsed_date, '%d %b')
                     except ValueError:
-                        pass
+                        try:
+                            date = datetime.strptime(parsed_date, '%d %B')
+                        except ValueError:
+                            pass
 
         return date
 
