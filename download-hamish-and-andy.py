@@ -238,7 +238,14 @@ class HamishAndAndyPodcastScrubber():
         podcast['release_date'] = podcast['release_date'].replace(day=date.day, month=date.month)
 
     def scrub(self, podcasts):
-        for podcast in podcasts:
+        podcasts_to_remove = []
+
+        for index, podcast in enumerate(podcasts):
+            extension = os.path.splitext(podcast['file_url'])[1]
+
+            if extension.lower() != '.mp3':
+                podcasts_to_remove.append(index)
+
             if podcast['id'] in self.EPISODE_DATE_OVERRIDES:
                 self.override_date(podcast, self.EPISODE_DATE_OVERRIDES[podcast['id']])
             else:
@@ -267,10 +274,15 @@ class HamishAndAndyPodcastScrubber():
                 podcast_title = podcast_date_string
                 podcast_filename_title = podcast_filename_date_string
 
-            filename = 'Hamish & Andy - ' + podcast_filename_title + os.path.splitext(podcast['file_url'])[1]
+            filename = 'Hamish & Andy - ' + podcast_filename_title + extension
 
             podcast['title'] = podcast_title
             podcast['filename'] = filename
+
+        podcasts_to_remove.reverse()
+
+        for index in podcasts_to_remove:
+            podcasts.pop(index)
 
         return podcasts
 
