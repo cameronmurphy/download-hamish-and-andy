@@ -164,8 +164,12 @@ class HamishAndAndyPodcastScrubber():
         if date_match is not None:
             # Remove suffix from day of month
             parsed_date = re.sub('(\d{1,2})(?:st|nd|rd|th)', '\\1', date_match.group(1))
-            # Zero pad the day of the month
+            # Zero pad the day of the month (if the day number is at the beginning)
+            parsed_date = re.sub('^(\d) ', '0\\1 ', parsed_date)
+            # Zero pad the day of the month (if the day number is elsewhere in the string)
             parsed_date = re.sub(' (\d) ', ' 0\\1 ', parsed_date)
+
+            parsed_date = parsed_date.strip()
 
             # Try some known date formats
             try:
