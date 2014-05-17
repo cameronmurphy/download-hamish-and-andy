@@ -179,10 +179,12 @@ class HamishAndAndyPodcastScrubber():
                     date = datetime.strptime(parsed_date, '%b %d %Y')
                 except ValueError:
                     try:
-                        date = datetime.strptime(parsed_date, '%d %b')
+                        # Add year 2000 cause it's a leap year, means we can parse 29th Feb
+                        date = datetime.strptime(parsed_date + ' 2000', '%d %b %Y')
                     except ValueError:
                         try:
-                            date = datetime.strptime(parsed_date, '%d %B')
+                            # Add year 2000 cause it's a leap year, means we can parse 29th Feb
+                            date = datetime.strptime(parsed_date + ' 2000', '%d %B %Y')
                         except ValueError:
                             pass
 
