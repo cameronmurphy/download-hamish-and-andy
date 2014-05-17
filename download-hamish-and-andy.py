@@ -228,7 +228,7 @@ class HamishAndAndyPodcastScrubber():
     def cleanup_title(podcast):
         podcast['title'] = podcast['title'].partition('-')[2].strip()
         podcast['title'] = re.sub(HamishAndAndyPodcastScrubber.NAME_WITH_DATE_REGEX, '\\2', podcast['title'])
-        podcast['title'] = podcast['title'].lstrip(' -(').rstrip(')')
+        podcast['title'] = podcast['title'].lstrip(' -(,').rstrip(')')
 
     def override_date(self, podcast, date_string):
         message = 'Manual date override (%s) of episode \'%s\' (%d)' % (date_string, podcast['title'], podcast['id'])
