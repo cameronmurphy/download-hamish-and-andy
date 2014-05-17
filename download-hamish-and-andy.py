@@ -190,6 +190,12 @@ class HamishAndAndyPodcastScrubber():
 
         return date
 
+    @staticmethod
+    def cleanup_title(podcast):
+        podcast['title'] = podcast['title'].partition('-')[2].strip()
+        podcast['title'] = re.sub(HamishAndAndyPodcastScrubber.NAME_WITH_DATE_REGEX, '\\2', podcast['title'])
+        podcast['title'] = podcast['title'].lstrip(' -(,').rstrip(')')
+
     def fix_podcast_date(self, podcast):
         title_date = self.search_and_parse_date(podcast['title'])
 
@@ -229,12 +235,6 @@ class HamishAndAndyPodcastScrubber():
                                podcast['release_date'].strftime('%Y-%m-%d'))
 
             print self.RED_TEXT_ESCAPE_SEQUENCE % warning_message
-
-    @staticmethod
-    def cleanup_title(podcast):
-        podcast['title'] = podcast['title'].partition('-')[2].strip()
-        podcast['title'] = re.sub(HamishAndAndyPodcastScrubber.NAME_WITH_DATE_REGEX, '\\2', podcast['title'])
-        podcast['title'] = podcast['title'].lstrip(' -(,').rstrip(')')
 
     def override_date(self, podcast, date_string):
         message = 'Manual date override (%s) of episode \'%s\' (%d)' % (date_string, podcast['title'], podcast['id'])
