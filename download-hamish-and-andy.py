@@ -390,7 +390,14 @@ while page_limit_option > 0 and parser.next():
             subprocess.call(['touch', episode['filename']])
             continue
 
-        downloader.download_file(episode['file_url'], episode['filename'])
+        try:
+            downloader.download_file(episode['file_url'], episode['filename'])
+        except urllib2.HTTPError as http_error:
+            if http_error.code == 404:
+                print AnsiEscapeSequences.RED_TEXT % 'HTTP 404 when trying to download %s' % episode['filename']
+                continue
+            else:
+                raise http_error
 
         mp3_file = EasyID3(episode['filename'])
 
