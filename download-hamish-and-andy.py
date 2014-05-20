@@ -3,9 +3,10 @@
 import cookielib
 import mechanize
 import os
+import re
 import subprocess
 import sys
-import re
+import unicodedata
 import urllib2
 from bs4 import BeautifulSoup
 from datetime import datetime
@@ -204,6 +205,21 @@ class HamishAndAndyPodcastScrubber():
         if podcast['title'].find('(') == -1:
             podcast['title'] = podcast['title'].rstrip(')')
 
+    @staticmethod
+    def sanitise_filename(string):
+        if isinstance(string, unicode):
+            string = unicodedata.normalize('NFKD', string)
+
+        # Handle unicode RIGHT SINGLE QUOTATION MARK
+        string = string.replace(u'\u2019', u'\'')
+        string = string.encode('ASCII', 'ignore')
+        # Support all file systems, no slashes
+        string = string.replace('/', ' + ')
+        # Support Windows filesystem (no ? or :)
+        string = string.replace(': ', ' - ').replace(':', '.').replace('?', '')
+        string = string.strip()
+        return string
+
     def fix_podcast_date(self, podcast):
         title_date = self.search_and_parse_date(podcast['title'])
 
@@ -291,7 +307,7 @@ class HamishAndAndyPodcastScrubber():
             filename = 'Hamish & Andy - ' + podcast_filename_title + extension
 
             podcast['title'] = podcast_title
-            podcast['filename'] = filename
+            podcast['filename'] = HamishAndAndyPodcastScrubber.sanitise_filename(filename)
 
         podcasts_to_remove.reverse()
 
