@@ -13,6 +13,14 @@ from mutagen.easyid3 import EasyID3
 from optparse import OptionParser
 
 
+class AnsiEscapeSequences:
+    RED_TEXT = '\033[1;31m%s\033[1;m'
+    GREEN_TEXT = '\033[1;32m%s\033[1;m'
+
+    def __init__(self):
+        pass
+
+
 class HamishAndAndyLibSynParser():
     URL_REGEX = 'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+'
     URL = 'http://handa.libsyn.com/page/'
@@ -135,9 +143,6 @@ class HamishAndAndyLibSynParser():
 
 
 class HamishAndAndyPodcastScrubber():
-    RED_TEXT_ESCAPE_SEQUENCE = '\033[1;31m%s\033[1;m'
-    GREEN_TEXT_ESCAPE_SEQUENCE = '\033[1;32m%s\033[1;m'
-
     DATE_REGEX = '(?:Monday|Mon|Tuesday|Tues|Wednesday|Wedensday|Wed|Thursday|Thurs|Friday|Fri)? ?' + \
                  '((?:\d{1,2}(?:st|nd|rd|th)?)? ?' + \
                  '(?:January|Jan|February|Feb|March|Mar|April|Apr|May|June|Jun|July' + \
@@ -211,7 +216,7 @@ class HamishAndAndyPodcastScrubber():
                                podcast['id'],
                                title_date.strftime('%d/%m'))
 
-            print self.RED_TEXT_ESCAPE_SEQUENCE % warning_message
+            print AnsiEscapeSequences.RED_TEXT % warning_message
 
             podcast['release_date'] = podcast['release_date'].replace(day=title_date.day, month=title_date.month)
 
@@ -226,7 +231,7 @@ class HamishAndAndyPodcastScrubber():
                                    podcast['id'],
                                    body_date.strftime('%d/%m'))
 
-                print self.RED_TEXT_ESCAPE_SEQUENCE % warning_message
+                print AnsiEscapeSequences.RED_TEXT % warning_message
 
                 podcast['release_date'] = podcast['release_date'].replace(day=body_date.day, month=body_date.month)
 
@@ -237,11 +242,11 @@ class HamishAndAndyPodcastScrubber():
                                podcast['id'],
                                podcast['release_date'].strftime('%Y-%m-%d'))
 
-            print self.RED_TEXT_ESCAPE_SEQUENCE % warning_message
+            print AnsiEscapeSequences.RED_TEXT % warning_message
 
     def override_date(self, podcast, date_string):
         message = 'Manual date override (%s) of episode \'%s\' (%d)' % (date_string, podcast['title'], podcast['id'])
-        print self.GREEN_TEXT_ESCAPE_SEQUENCE % message
+        print AnsiEscapeSequences.GREEN_TEXT % message
 
         date = datetime.strptime(self.EPISODE_DATE_OVERRIDES[podcast['id']], '%Y-%m-%d')
         podcast['release_date'] = podcast['release_date'].replace(day=date.day, month=date.month)
