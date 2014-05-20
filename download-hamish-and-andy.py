@@ -29,6 +29,7 @@ class HamishAndAndyLibSynParser():
     def __init__(self, page_number, offset=0, limit=sys.maxint, dry_run=False):
         self.episodes = []
         self._page_number = page_number
+        self._page_count = 0
         self._offset = offset
         self._limit = limit
         self._dry_run = dry_run
@@ -103,12 +104,26 @@ class HamishAndAndyLibSynParser():
         if self._limit <= 0:
             return False
 
+        if self._page_number > self._page_count > 0:
+            return False
+
         response = self.web_request(self.URL + str(self._page_number))
 
         if response['code'] != 200:
             raise RuntimeError('Web server returned ' + str(response['code']))
 
         soup = BeautifulSoup(response['content'])
+
+        if self._page_count == 0:
+            pager_element = soup.find('div', {'class': 'pager'})
+
+            if pager_element is None:
+                raise RuntimeError('d.pager element is missing')
+
+            page_elements = pager_element.findAll('a')
+            last_page_element = page_elements[len(page_elements) - 1]
+            self._page_count = int(last_page_element.text)
+
         episodes_soup = soup.findAll('div', {'class': 'libsyn-item'})
 
         if episodes_soup.count == 0:
