@@ -349,7 +349,7 @@ class LibSynDownloader():
 
         login_form_index = -1
 
-        for ((form_index, form)) in enumerate(browser.forms()):
+        for (form_index, form) in enumerate(browser.forms()):
             if form.name == 'login_form':
                 login_form_index = form_index
 
