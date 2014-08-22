@@ -170,7 +170,12 @@ class HamishAndAndyPodcastScrubber():
     PODCAST_RETURNS_REGEX = 'Podcast Returns'
 
     EPISODES_WITH_CORRECT_DATES = [2652979, 2461292, 2231202]
-    EPISODE_DATE_OVERRIDES = {2744131: '2014-03-21', 1865221: '2007-03-26', 1865227: '2007-03-16'}
+    EPISODE_DATE_OVERRIDES = {
+        2873978: '2014-06-05',
+        2744131: '2014-03-21',
+        1865221: '2007-03-26',
+        1865227: '2007-03-16'
+    }
 
     def __init__(self):
         self._first_day_of_year = datetime.now().replace(
