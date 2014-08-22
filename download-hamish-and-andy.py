@@ -197,22 +197,39 @@ class HamishAndAndyPodcastScrubber():
 
             parsed_date = parsed_date.strip()
 
-            # Try some known date formats
+            # Try some known date formats (a loop might be neater here)
             try:
-                date = datetime.strptime(parsed_date, '%B %d %Y')
+                date = datetime.strptime(parsed_date, '%B %d %Y')  # March 30 2012
             except ValueError:
                 try:
-                    date = datetime.strptime(parsed_date, '%b %d %Y')
+                    date = datetime.strptime(parsed_date, '%b %d %Y')  # Mar 30 2012
                 except ValueError:
                     try:
-                        # Add year 2000 cause it's a leap year, means we can parse 29th Feb
-                        date = datetime.strptime(parsed_date + ' 2000', '%d %b %Y')
+                        date = datetime.strptime(parsed_date, '%d %B %Y')  # 30 March 2012
                     except ValueError:
                         try:
-                            # Add year 2000 cause it's a leap year, means we can parse 29th Feb
-                            date = datetime.strptime(parsed_date + ' 2000', '%d %B %Y')
+                            date = datetime.strptime(parsed_date, '%d %b %Y')  # 30 Mar 2012
                         except ValueError:
-                            pass
+                            try:
+                                # If date has no year, add year 2000 cause it's a leap year, means we can parse 29th Feb
+                                date = datetime.strptime(parsed_date + ' 2000', '%d %B %Y')
+                            except ValueError:
+                                try:
+                                    # If date has no year, add year 2000 cause it's a leap year, means we can parse
+                                    # 29th Feb
+                                    date = datetime.strptime(parsed_date + ' 2000', '%d %b %Y')
+                                except ValueError:
+                                    try:
+                                        # If date has no year, add year 2000 cause it's a leap year, means we can parse
+                                        # 29th Feb
+                                        date = datetime.strptime(parsed_date + ' 2000', '%B %d %Y')
+                                    except ValueError:
+                                        try:
+                                            # If date has no year, add year 2000 cause it's a leap year, means we can
+                                            # parse 29th Feb
+                                            date = datetime.strptime(parsed_date + ' 2000', '%b %d %Y')
+                                        except ValueError:
+                                            pass
 
         return date
 
