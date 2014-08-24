@@ -439,7 +439,8 @@ while page_limit_option > 0 and parser.next():
             print 'Downloading ' + episode['filename'] + '...'
 
         if os.path.isfile(episode['filename']):
-            raise RuntimeError('Two episodes exist with filename: %s' % episode['filename'])
+            print AnsiEscapeSequences.GREEN_TEXT % '%s already exists, skipping' % episode['filename']
+            continue
 
         if dry_run_option:
             # Pretend to download
