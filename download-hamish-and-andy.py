@@ -194,6 +194,8 @@ class HamishAndAndyPodcastScrubber():
             parsed_date = re.sub('^(\d) ', '0\\1 ', parsed_date)
             # Zero pad the day of the month (if the day number is elsewhere in the string)
             parsed_date = re.sub(' (\d) ', ' 0\\1 ', parsed_date)
+            # Replace Sept with Sep (Python abbreviates month names to 3 characters)
+            parsed_date = re.sub(' Sept ', ' Sep ', parsed_date)
 
             parsed_date = parsed_date.strip()
 
