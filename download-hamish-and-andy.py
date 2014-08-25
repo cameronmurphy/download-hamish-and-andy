@@ -265,20 +265,19 @@ class HamishAndAndyPodcastScrubber():
     def fix_podcast_date(self, podcast):
         title_date = self.search_and_parse_date(podcast['title'])
 
-        if title_date is not None and (title_date.day != podcast['release_date'].day or
-                                       title_date.month != podcast['release_date'].month):
+        if title_date is not None:
+            if title_date.day != podcast['release_date'].day or title_date.month != podcast['release_date'].month:
+                warning_message = 'Warning: overriding date %s of episode \'%s\' (%d) with date from title: %s' % \
+                                  (podcast['release_date'].strftime('%Y-%m-%d'),
+                                   podcast['title'],
+                                   podcast['id'],
+                                   title_date.strftime('%d/%m'))
 
-            warning_message = 'Warning: overriding date %s of episode \'%s\' (%d) with parsed date from title: %s' % \
-                              (podcast['release_date'].strftime('%Y-%m-%d'),
-                               podcast['title'],
-                               podcast['id'],
-                               title_date.strftime('%d/%m'))
+                print AnsiEscapeSequences.RED_TEXT % warning_message
 
-            print AnsiEscapeSequences.RED_TEXT % warning_message
+                podcast['release_date'] = podcast['release_date'].replace(day=title_date.day, month=title_date.month)
 
-            podcast['release_date'] = podcast['release_date'].replace(day=title_date.day, month=title_date.month)
-
-        if 'body' in podcast:
+        elif 'body' in podcast:
             body_date = self.search_and_parse_date(podcast['body'])
 
             if body_date and (body_date.day != podcast['release_date'].day or
