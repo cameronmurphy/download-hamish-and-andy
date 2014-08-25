@@ -436,11 +436,11 @@ while page_limit_option > 0 and parser.next():
         if dry_run_option:
             print '"%s", "%s"' % (episode['title'], episode['filename'])
         else:
-            print 'Downloading ' + episode['filename'] + '...'
+            if os.path.isfile(episode['filename']):
+                print AnsiEscapeSequences.GREEN_TEXT % '%s already exists, skipping' % episode['filename']
+                continue
 
-        if os.path.isfile(episode['filename']):
-            print AnsiEscapeSequences.GREEN_TEXT % '%s already exists, skipping' % episode['filename']
-            continue
+            print 'Downloading ' + episode['filename'] + '...'
 
         if dry_run_option:
             # Pretend to download
