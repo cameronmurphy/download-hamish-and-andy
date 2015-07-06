@@ -92,7 +92,7 @@ class HamishAndAndyLibSynParser():
         if response['code'] != 200:
             raise RuntimeError('Web server returned ' + str(response['code']))
 
-        soup = BeautifulSoup(response['content'])
+        soup = BeautifulSoup(response['content'], 'html.parser')
         script_content = soup.body.find('script', {'src': None}).string.strip()
 
         media_url_search = re.search('mediaURL = "(%s)";' % self.URL_REGEX, script_content)
@@ -112,7 +112,7 @@ class HamishAndAndyLibSynParser():
         if response['code'] != 200:
             raise RuntimeError('Web server returned ' + str(response['code']))
 
-        soup = BeautifulSoup(response['content'])
+        soup = BeautifulSoup(response['content'], 'html.parser')
 
         if self._page_count == 0:
             pager_element = soup.find('div', {'class': 'pager'})
