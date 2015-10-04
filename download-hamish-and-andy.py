@@ -22,7 +22,7 @@ class AnsiEscapeSequences:
         pass
 
 
-class HamishAndAndyLibSynParser():
+class HamishAndAndyLibSynParser:
     URL_REGEX = 'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+'
     URL = 'http://handa.libsyn.com/page/'
 
@@ -158,8 +158,8 @@ class HamishAndAndyLibSynParser():
         self.episodes = []
 
 
-class HamishAndAndyPodcastScrubber():
     DATE_REGEX = '(?:Monday|Mon|Tuesday|Tues|Wednesday|Wedensday|Wed|Thursday|Thurs|Friday|Fri)? ?' + \
+class HamishAndAndyPodcastScrubber:
                  '((?:\d{1,2}(?:st|nd|rd|th)?)? ?' + \
                  '(?:January|Jan|February|Feb|March|Mar|April|Apr|May|June|Jun|July' + \
                  '|Jul|August|Aug|September|Sept|October|Oct|November|Nov|December|Dec) ?' + \
