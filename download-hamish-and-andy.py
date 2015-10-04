@@ -405,69 +405,74 @@ class LibSynDownloader():
         output.close()
 
 
-option_parser = OptionParser()
-option_parser.add_option('--page', type='int', help='page number to begin downloading from')
-option_parser.add_option('--limit', type='int', help='maximum number of episodes to download')
-option_parser.add_option('--offset', type='int', help='number of episodes to skip')
-option_parser.add_option('--page-limit', type='int', help='maximum number of pages to download')
-option_parser.add_option('--username', type='string', help='username for my.libsyn.com (only required for premium eps')
-option_parser.add_option('--password', type='string', help='password for my.libsyn.com (only required for premium eps')
-option_parser.add_option('--dry-run', action='store_true')
+def main():
+    option_parser = OptionParser()
+    option_parser.add_option('--page', type='int', help='page number to begin downloading from')
+    option_parser.add_option('--limit', type='int', help='maximum number of episodes to download')
+    option_parser.add_option('--offset', type='int', help='number of episodes to skip')
+    option_parser.add_option('--page-limit', type='int', help='maximum number of pages to download')
+    option_parser.add_option('--username', type='string', help='username for my.libsyn.com (only required for premium eps')
+    option_parser.add_option('--password', type='string', help='password for my.libsyn.com (only required for premium eps')
+    option_parser.add_option('--dry-run', action='store_true')
 
-(options, args) = option_parser.parse_args()
+    (options, args) = option_parser.parse_args()
 
-page_limit_option = options.page_limit if (options.page_limit is not None) else sys.maxint
-page_number_option = options.page if (options.page is not None and options.page > 0) else 1
-offset_option = options.offset if (options.offset is not None and options.offset > 0) else 0
-limit_option = options.limit if (options.limit is not None) else sys.maxint
-dry_run_option = options.dry_run if (options.dry_run is not None) else False
+    page_limit_option = options.page_limit if (options.page_limit is not None) else sys.maxint
+    page_number_option = options.page if (options.page is not None and options.page > 0) else 1
+    offset_option = options.offset if (options.offset is not None and options.offset > 0) else 0
+    limit_option = options.limit if (options.limit is not None) else sys.maxint
+    dry_run_option = options.dry_run if (options.dry_run is not None) else False
 
-downloader = LibSynDownloader()
-scrubber = HamishAndAndyPodcastScrubber()
+    downloader = LibSynDownloader()
+    scrubber = HamishAndAndyPodcastScrubber()
 
-if not dry_run_option and options.username is not None and options.password is not None:
-    print 'Logging into my.libsyn.com'
-    downloader.login(options.username, options.password)
+    if not dry_run_option and options.username is not None and options.password is not None:
+        print 'Logging into my.libsyn.com'
+        downloader.login(options.username, options.password)
 
-parser = HamishAndAndyLibSynParser(page_number_option, offset_option, limit_option, dry_run_option)
+    parser = HamishAndAndyLibSynParser(page_number_option, offset_option, limit_option, dry_run_option)
 
-while page_limit_option > 0 and parser.next():
-    episodes = scrubber.scrub(parser.episodes)
+    while page_limit_option > 0 and parser.next():
+        episodes = scrubber.scrub(parser.episodes)
 
-    for episode in episodes:
-        if dry_run_option:
-            print '"%s", "%s"' % (episode['title'], episode['filename'])
-        else:
-            if os.path.isfile(episode['filename']):
-                print AnsiEscapeSequences.GREEN_TEXT % '%s already exists, skipping' % episode['filename']
-                continue
-
-            print 'Downloading ' + episode['filename'] + '...'
-
-        if dry_run_option:
-            # Pretend to download
-            subprocess.call(['touch', episode['filename']])
-            continue
-
-        try:
-            downloader.download_file(episode['file_url'], episode['filename'])
-        except urllib2.HTTPError as http_error:
-            if http_error.code == 404:
-                print AnsiEscapeSequences.RED_TEXT % 'HTTP 404 when trying to download %s' % episode['filename']
-                continue
+        for episode in episodes:
+            if dry_run_option:
+                print '"%s", "%s"' % (episode['title'], episode['filename'])
             else:
-                raise http_error
+                if os.path.isfile(episode['filename']):
+                    print AnsiEscapeSequences.GREEN_TEXT % '%s already exists, skipping' % episode['filename']
+                    continue
 
-        mp3_file = EasyID3(episode['filename'])
+                print 'Downloading ' + episode['filename'] + '...'
 
-        mp3_file['title'] = episode['title']
-        mp3_file['date'] = str(episode['release_date'].year)
-        mp3_file['artist'] = 'Hamish & Andy'
-        mp3_file['albumartistsort'] = 'Hamish & Andy'
-        mp3_file['album'] = 'Podcasts ' + episode['release_date'].strftime('%Y')
-        mp3_file['albumsort'] = 'Podcasts ' + episode['release_date'].strftime('%Y')
-        mp3_file['tracknumber'] = str(episode['track_number'])
+            if dry_run_option:
+                # Pretend to download
+                subprocess.call(['touch', episode['filename']])
+                continue
 
-        mp3_file.save()
+            try:
+                downloader.download_file(episode['file_url'], episode['filename'])
+            except urllib2.HTTPError as http_error:
+                if http_error.code == 404:
+                    print AnsiEscapeSequences.RED_TEXT % 'HTTP 404 when trying to download %s' % episode['filename']
+                    continue
+                else:
+                    raise http_error
 
-    page_limit_option -= 1
+            mp3_file = EasyID3(episode['filename'])
+
+            mp3_file['title'] = episode['title']
+            mp3_file['date'] = str(episode['release_date'].year)
+            mp3_file['artist'] = 'Hamish & Andy'
+            mp3_file['albumartistsort'] = 'Hamish & Andy'
+            mp3_file['album'] = 'Podcasts ' + episode['release_date'].strftime('%Y')
+            mp3_file['albumsort'] = 'Podcasts ' + episode['release_date'].strftime('%Y')
+            mp3_file['tracknumber'] = str(episode['track_number'])
+
+            mp3_file.save()
+
+        page_limit_option -= 1
+
+
+if __name__ == '__main__':
+    main()
