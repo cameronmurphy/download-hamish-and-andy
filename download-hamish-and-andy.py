@@ -158,8 +158,8 @@ class HamishAndAndyLibSynParser:
         self.episodes = []
 
 
-    DATE_REGEX = '(?:Monday|Mon|Tuesday|Tues|Wednesday|Wedensday|Wed|Thursday|Thurs|Friday|Fri)? ?' + \
 class HamishAndAndyPodcastScrubber:
+    DATE_REGEX = '(?:Monday|Mon|Tuesday|Tues|Tue|Wednesday|Wedensday|Wed|Thursday|Thurs|Thur|Thu|Friday|Fri)? ?' + \
                  '((?:\d{1,2}(?:st|nd|rd|th)?)? ?' + \
                  '(?:January|Jan|February|Feb|March|Mar|April|Apr|May|June|Jun|July' + \
                  '|Jul|August|Aug|September|Sept|October|Oct|November|Nov|December|Dec) ?' + \
