@@ -238,7 +238,8 @@ class HamishAndAndyPodcastScrubber:
 
     @staticmethod
     def cleanup_title(podcast):
-        podcast['title'] = podcast['title'].partition('-')[2].strip()
+        if podcast['title'].startswith('Hamish & Andy - '):
+            podcast['title'] = podcast['title'][len('Hamish & Andy - '):]
 
         if HamishAndAndyPodcastScrubber.search_and_parse_date(podcast['title']):
             podcast['title'] = re.sub(HamishAndAndyPodcastScrubber.NAME_WITH_DATE_REGEX, '\\2', podcast['title'])
