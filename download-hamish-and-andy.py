@@ -114,7 +114,10 @@ class HamishAndAndyLibSynParser:
         if response['code'] != 200:
             raise RuntimeError('Web server returned ' + str(response['code']))
 
-        soup = BeautifulSoup(response['content'], 'html.parser')
+        # Clean up some broken markup
+        content = response['content'].replace('</div></div></div></div></div>', '</div></div></div></div>')
+
+        soup = BeautifulSoup(content, 'html.parser')
         script_content = soup.body.find('script', {'src': None}).string.strip()
 
         media_url_search = re.search('mediaURL = "(%s)";' % self.URL_REGEX, script_content)
