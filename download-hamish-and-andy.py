@@ -493,6 +493,7 @@ def main():
                     raise http_error
 
             mp3_file = eyed3.load(episode['filename'])
+            mp3_file.initTag()
 
             mp3_file.tag.title = unicode(episode['title'])
             mp3_file.tag.date = str(episode['release_date'].year)
