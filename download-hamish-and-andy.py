@@ -1,7 +1,9 @@
 #!/usr/bin/env python
 
 import cookielib
+import eyed3
 import mechanize
+import json
 import os
 import re
 import subprocess
@@ -10,7 +12,7 @@ import unicodedata
 import urllib2
 from bs4 import BeautifulSoup
 from datetime import datetime
-from mutagen.easyid3 import EasyID3
+from eyed3 import id3
 from optparse import OptionParser
 
 
@@ -20,6 +22,26 @@ class AnsiEscapeSequences:
 
     def __init__(self):
         pass
+
+
+class HamishAndAndyiTunesArtworkDownloader:
+    API_URL = 'https://itunes.apple.com/search?country=AU&entity=podcast&attribute=allArtistTerm&term=Hamish+and+Andy'
+
+    def __init__(self):
+        pass
+
+    def resolve_and_download(self):
+        request = urllib2.Request(self.API_URL)
+        response = urllib2.urlopen(request)
+
+        # TODO - Validate response
+        parsed_response = json.loads(response.read())
+        image_url = parsed_response['results'][0]['artworkUrl600']
+
+        request = urllib2.Request(image_url)
+        response = urllib2.urlopen(request)
+
+        return response.read()
 
 
 class HamishAndAndyLibSynParser:
@@ -362,7 +384,7 @@ class HamishAndAndyPodcastScrubber:
         return podcasts
 
 
-class LibSynDownloader():
+class LibSynDownloader:
     LOGIN_URL = 'https://my.libsyn.com/auth/login'
 
     def __init__(self):
@@ -414,8 +436,8 @@ def main():
     option_parser.add_option('--limit', type='int', help='maximum number of episodes to download')
     option_parser.add_option('--offset', type='int', help='number of episodes to skip')
     option_parser.add_option('--page-limit', type='int', help='maximum number of pages to download')
-    option_parser.add_option('--username', type='string', help='username for my.libsyn.com (only required for premium eps')
-    option_parser.add_option('--password', type='string', help='password for my.libsyn.com (only required for premium eps')
+    option_parser.add_option('--username', type='string', help='username for my.libsyn.com')
+    option_parser.add_option('--password', type='string', help='password for my.libsyn.com')
     option_parser.add_option('--dry-run', action='store_true')
 
     (options, args) = option_parser.parse_args()
@@ -426,12 +448,17 @@ def main():
     limit_option = options.limit if (options.limit is not None) else sys.maxint
     dry_run_option = options.dry_run if (options.dry_run is not None) else False
 
+    artwork_downloader = HamishAndAndyiTunesArtworkDownloader()
     downloader = LibSynDownloader()
     scrubber = HamishAndAndyPodcastScrubber()
+    image_data = None
 
-    if not dry_run_option and options.username is not None and options.password is not None:
-        print 'Logging into my.libsyn.com'
-        downloader.login(options.username, options.password)
+    if not dry_run_option:
+        image_data = artwork_downloader.resolve_and_download()
+
+        if options.username is not None and options.password is not None:
+            print 'Logging into my.libsyn.com'
+            downloader.login(options.username, options.password)
 
     parser = HamishAndAndyLibSynParser(page_number_option, offset_option, limit_option, dry_run_option)
 
@@ -462,17 +489,16 @@ def main():
                 else:
                     raise http_error
 
-            mp3_file = EasyID3(episode['filename'])
+            mp3_file = eyed3.load(episode['filename'])
 
-            mp3_file['title'] = episode['title']
-            mp3_file['date'] = str(episode['release_date'].year)
-            mp3_file['artist'] = 'Hamish & Andy'
-            mp3_file['albumartistsort'] = 'Hamish & Andy'
-            mp3_file['album'] = 'Podcasts ' + episode['release_date'].strftime('%Y')
-            mp3_file['albumsort'] = 'Podcasts ' + episode['release_date'].strftime('%Y')
-            mp3_file['tracknumber'] = str(episode['track_number'])
+            mp3_file.tag.title = unicode(episode['title'])
+            mp3_file.tag.date = str(episode['release_date'].year)
+            mp3_file.tag.artist = u'Hamish & Andy'
+            mp3_file.tag.album = unicode('Podcasts ' + episode['release_date'].strftime('%Y'))
+            mp3_file.tag.track_num = episode['track_number']
+            mp3_file.tag.images.set(id3.frames.ImageFrame.FRONT_COVER, image_data, 'image/jpeg')
 
-            mp3_file.save()
+            mp3_file.tag.save()
 
         page_limit_option -= 1
 
