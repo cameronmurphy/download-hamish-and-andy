@@ -496,7 +496,7 @@ def main():
             mp3_file.tag.artist = u'Hamish & Andy'
             mp3_file.tag.album = unicode('Podcasts ' + episode['release_date'].strftime('%Y'))
             mp3_file.tag.track_num = episode['track_number']
-            mp3_file.tag.images.set(id3.frames.ImageFrame.FRONT_COVER, image_data, 'image/jpeg')
+            mp3_file.tag.images.set(id3.frames.ImageFrame.MEDIA, image_data, 'image/jpeg')
 
             mp3_file.tag.save()
 
