@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import cookielib
 import eyed3
@@ -302,7 +302,7 @@ class HamishAndAndyPodcastScrubber:
                                    podcast['id'],
                                    title_date.strftime('%d/%m'))
 
-                print AnsiEscapeSequences.RED_TEXT % warning_message
+                print(AnsiEscapeSequences.RED_TEXT % warning_message)
 
                 podcast['release_date'] = podcast['release_date'].replace(day=title_date.day, month=title_date.month)
 
@@ -317,7 +317,7 @@ class HamishAndAndyPodcastScrubber:
                                    podcast['id'],
                                    body_date.strftime('%d/%m'))
 
-                print AnsiEscapeSequences.RED_TEXT % warning_message
+                print(AnsiEscapeSequences.RED_TEXT % warning_message)
 
                 podcast['release_date'] = podcast['release_date'].replace(day=body_date.day, month=body_date.month)
 
@@ -328,11 +328,11 @@ class HamishAndAndyPodcastScrubber:
                                podcast['id'],
                                podcast['release_date'].strftime('%Y-%m-%d'))
 
-            print AnsiEscapeSequences.RED_TEXT % warning_message
+            print(AnsiEscapeSequences.RED_TEXT % warning_message)
 
     def override_date(self, podcast, date_string):
         message = 'Manual date override (%s) of episode \'%s\' (%d)' % (date_string, podcast['title'], podcast['id'])
-        print AnsiEscapeSequences.GREEN_TEXT % message
+        print(AnsiEscapeSequences.GREEN_TEXT % message)
 
         date = datetime.strptime(self.EPISODE_DATE_OVERRIDES[podcast['id']], '%Y-%m-%d')
         podcast['release_date'] = podcast['release_date'].replace(day=date.day, month=date.month)
@@ -460,7 +460,7 @@ def main():
         image_data = artwork_downloader.resolve_and_download()
 
         if options.username is not None and options.password is not None:
-            print 'Logging into my.libsyn.com'
+            print('Logging into my.libsyn.com')
             downloader.login(options.username, options.password)
 
     parser = HamishAndAndyLibSynParser(page_number_option, offset_option, limit_option, dry_run_option)
@@ -470,13 +470,13 @@ def main():
 
         for episode in episodes:
             if dry_run_option:
-                print '"%s", "%s"' % (episode['title'], episode['filename'])
+                print('"%s", "%s"' % (episode['title'], episode['filename']))
             else:
                 if os.path.isfile(episode['filename']):
-                    print AnsiEscapeSequences.GREEN_TEXT % '%s already exists, skipping' % episode['filename']
+                    print(AnsiEscapeSequences.GREEN_TEXT % '%s already exists, skipping' % episode['filename'])
                     continue
 
-                print 'Downloading ' + episode['filename'] + '...'
+                print('Downloading ' + episode['filename'] + '...')
 
             if dry_run_option:
                 # Pretend to download
@@ -487,7 +487,7 @@ def main():
                 downloader.download_file(episode['file_url'], episode['filename'])
             except urllib2.HTTPError as http_error:
                 if http_error.code == 404:
-                    print AnsiEscapeSequences.RED_TEXT % 'HTTP 404 when trying to download %s' % episode['filename']
+                    print(AnsiEscapeSequences.RED_TEXT % 'HTTP 404 when trying to download %s' % episode['filename'])
                     continue
                 else:
                     raise http_error
