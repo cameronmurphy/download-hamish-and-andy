@@ -1,19 +1,14 @@
 #!/usr/bin/env python3
 
-import cookielib
-import eyed3
-import mechanize
+import argparse
 import json
 import os
 import re
 import subprocess
 import sys
-import unicodedata
-import urllib2
 from bs4 import BeautifulSoup
 from datetime import datetime
 from eyed3 import id3
-from optparse import OptionParser
 
 
 class AnsiEscapeSequences:
@@ -48,7 +43,7 @@ class HamishAndAndyLibSynParser:
     URL_REGEX = 'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+'
     URL = 'http://handa.libsyn.com/page/'
 
-    def __init__(self, page_number, offset=0, limit=sys.maxint, dry_run=False):
+    def __init__(self, page_number, offset=0, limit=sys.maxsize, dry_run=False):
         self.episodes = []
         self._page_number = page_number
         self._page_count = 0
@@ -434,22 +429,16 @@ class LibSynDownloader:
 
 
 def main():
-    option_parser = OptionParser()
-    option_parser.add_option('--page', type='int', help='page number to begin downloading from')
-    option_parser.add_option('--limit', type='int', help='maximum number of episodes to download')
-    option_parser.add_option('--offset', type='int', help='number of episodes to skip')
-    option_parser.add_option('--page-limit', type='int', help='maximum number of pages to download')
-    option_parser.add_option('--username', type='string', help='username for my.libsyn.com')
-    option_parser.add_option('--password', type='string', help='password for my.libsyn.com')
-    option_parser.add_option('--dry-run', action='store_true')
+    arg_parser = argparse.ArgumentParser()
+    arg_parser.add_argument('--page', type=int, help='page number to begin downloading from', default=1)
+    arg_parser.add_argument('--limit', type=int, help='maximum number of episodes to download', default=sys.maxsize)
+    arg_parser.add_argument('--offset', type=int, help='number of episodes to skip', default=0)
+    arg_parser.add_argument('--page-limit', type=int, help='maximum number of pages to download', default=sys.maxsize)
+    arg_parser.add_argument('--username', help='username for my.libsyn.com')
+    arg_parser.add_argument('--password', help='password for my.libsyn.com')
+    arg_parser.add_argument('--dry-run', action='store_true')
 
-    (options, args) = option_parser.parse_args()
-
-    page_limit_option = options.page_limit if (options.page_limit is not None) else sys.maxint
-    page_number_option = options.page if (options.page is not None and options.page > 0) else 1
-    offset_option = options.offset if (options.offset is not None and options.offset > 0) else 0
-    limit_option = options.limit if (options.limit is not None) else sys.maxint
-    dry_run_option = options.dry_run if (options.dry_run is not None) else False
+    args = arg_parser.parse_args()
 
     artwork_downloader = HamishAndAndyiTunesArtworkDownloader()
     downloader = LibSynDownloader()
@@ -459,17 +448,17 @@ def main():
     if not dry_run_option:
         image_data = artwork_downloader.resolve_and_download()
 
-        if options.username is not None and options.password is not None:
+        if args.username is not None and args.password is not None:
             print('Logging into my.libsyn.com')
-            downloader.login(options.username, options.password)
+            downloader.login(args.username, args.password)
 
-    parser = HamishAndAndyLibSynParser(page_number_option, offset_option, limit_option, dry_run_option)
+    parser = HamishAndAndyLibSynParser(args.page, args.offset, args.limit, args.dry_run)
 
-    while page_limit_option > 0 and parser.next():
+    while args.page_limit > 0 and parser.next():
         episodes = scrubber.scrub(parser.episodes)
 
         for episode in episodes:
-            if dry_run_option:
+            if args.dry_run:
                 print('"%s", "%s"' % (episode['title'], episode['filename']))
             else:
                 if os.path.isfile(episode['filename']):
@@ -478,7 +467,7 @@ def main():
 
                 print('Downloading ' + episode['filename'] + '...')
 
-            if dry_run_option:
+            if args.dry_run:
                 # Pretend to download
                 subprocess.call(['touch', episode['filename']])
                 continue
@@ -504,7 +493,7 @@ def main():
 
             mp3_file.tag.save()
 
-        page_limit_option -= 1
+        args.page_limit -= 1
 
 
 if __name__ == '__main__':
