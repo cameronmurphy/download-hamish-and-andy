@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import argparse
+import eyed3
 import json
 import os
 import re
@@ -8,7 +9,6 @@ import subprocess
 import sys
 from bs4 import BeautifulSoup
 from datetime import datetime
-from eyed3 import id3
 
 
 class AnsiEscapeSequences:
