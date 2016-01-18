@@ -9,6 +9,7 @@ import subprocess
 import sys
 from bs4 import BeautifulSoup
 from datetime import datetime
+from http.cookiejar import CookieJar
 
 
 class AnsiEscapeSequences:
@@ -386,7 +387,7 @@ class LibSynDownloader:
     LOGIN_URL = 'https://my.libsyn.com/auth/login'
 
     def __init__(self):
-        self._cookie_jar = cookielib.CookieJar()
+        self._cookie_jar = CookieJar()
 
     def login(self, username, password):
         browser = mechanize.Browser()
