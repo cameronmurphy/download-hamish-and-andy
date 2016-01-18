@@ -4,13 +4,15 @@ import argparse
 import eyed3
 import json
 import os
+import mechanicalsoup
 import re
 import requests
 import subprocess
 import sys
+import warnings
 from bs4 import BeautifulSoup
+from eyed3 import id3
 from datetime import datetime
-from http.cookiejar import CookieJar
 
 
 class AnsiEscapeSequences:
@@ -22,23 +24,22 @@ class AnsiEscapeSequences:
 
 
 class HamishAndAndyiTunesArtworkDownloader:
-    API_URL = 'https://itunes.apple.com/search?country=AU&entity=podcast&attribute=allArtistTerm&term=Hamish+and+Andy'
+    API_URL = 'https://itunes.apple.com/search?country=AU&media=podcast&entity=podcast&attribute=artistTerm&' \
+              'term=Hamish+Andy&limit=1'
 
     def __init__(self):
         pass
 
     def resolve_and_download(self):
-        request = urllib2.Request(self.API_URL)
-        response = urllib2.urlopen(request)
+        response = requests.get(self.API_URL)
 
         # TODO - Validate response
-        parsed_response = json.loads(response.read())
+        parsed_response = response.json()
         image_url = parsed_response['results'][0]['artworkUrl600']
 
-        request = urllib2.Request(image_url)
-        response = urllib2.urlopen(request)
+        response = requests.get(image_url)
 
-        return response.read()
+        return response.content
 
 
 class HamishAndAndyLibSynParser:
@@ -100,14 +101,12 @@ class HamishAndAndyLibSynParser:
 
     def resolve_file_url(self, player_url):
         response = requests.get(player_url)
-        print(response)
-        exit()
 
-        if response['code'] != 200:
-            raise RuntimeError('Web server returned ' + str(response['code']))
+        if response.status_code != 200:
+            raise RuntimeError('Web server returned %d' % response.status_code)
 
         # Clean up some broken markup
-        content = response['content'].replace('</div></div></div></div></div>', '</div></div></div></div>')
+        content = response.text.replace('</div></div></div></div></div>', '</div></div></div></div>')
 
         soup = BeautifulSoup(content, 'html.parser')
         script_content = soup.body.find('script', {'src': None}).string.strip()
@@ -127,7 +126,7 @@ class HamishAndAndyLibSynParser:
         response = requests.get(self.URL + str(self._page_number))
 
         if response.status_code != 200:
-            raise RuntimeError('Web server returned ' + str(response.status_code))
+            raise RuntimeError('Web server returned %d' % response.status_code)
 
         soup = BeautifulSoup(response.text, 'html.parser')
 
@@ -153,8 +152,8 @@ class HamishAndAndyLibSynParser:
 
             episode_data = self.parse_episode(soup)
 
-            # Only bother resolving if there's no thumbnail, if there's a thumbnail it's a video
-            if re.search('thumbnail/no', episode_data['player_url']):
+            # Only bother resolving if the podcast is not a video
+            if not re.search('class/video', episode_data['player_url']):
                 if not self._dry_run:
                     episode_data['file_url'] = self.resolve_file_url(episode_data['player_url'])
                 else:
@@ -270,12 +269,8 @@ class HamishAndAndyPodcastScrubber:
 
     @staticmethod
     def sanitise_filename(string):
-        if isinstance(string, unicode):
-            string = unicodedata.normalize('NFKD', string)
-
         # Handle unicode RIGHT SINGLE QUOTATION MARK
         string = string.replace(u'\u2019', u'\'')
-        string = string.encode('ASCII', 'ignore')
         # Support all file systems, no slashes
         string = string.replace('/', ' + ')
         # Support Windows filesystem (no ? or :)
@@ -354,7 +349,7 @@ class HamishAndAndyPodcastScrubber:
             podcast_date_string = '{0}, {1} {2}'.format(
                 podcast['release_date'].strftime('%a'),
                 str(podcast['release_date'].day),
-                podcast['release_date'].strftime('%b')
+                podcast['release_date'].strftime('%b, %Y'),
             )
 
             podcast_filename_date_string = podcast['release_date'].strftime('%Y-%m-%d')
@@ -383,45 +378,36 @@ class LibSynDownloader:
     LOGIN_URL = 'https://my.libsyn.com/auth/login'
 
     def __init__(self):
-        self._cookie_jar = CookieJar()
+        self._browser = mechanicalsoup.Browser()
 
     def login(self, username, password):
-        browser = mechanize.Browser()
-        browser.set_cookiejar(self._cookie_jar)
+        # https://github.com/hickford/MechanicalSoup/issues/22
+        warnings.simplefilter('ignore', UserWarning)
 
-        response = browser.open(self.LOGIN_URL)
+        response = self._browser.get(self.LOGIN_URL)
 
-        if response.code != 200:
+        if response.status_code != 200:
             raise RuntimeError('Login page returned %d' % response.code)
 
-        login_form_index = -1
+        login_form = response.soup.select('[name=login_form]')[0]
+        login_form.select('#email')[0]['value'] = username
+        login_form.select('#password')[0]['value'] = password
 
-        for (form_index, form) in enumerate(browser.forms()):
-            if form.name == 'login_form':
-                login_form_index = form_index
+        account_page_response = self._browser.submit(login_form, self.LOGIN_URL)
 
-        browser.select_form(nr=login_form_index)
-        browser.form['email'] = username
-        browser.form['password'] = password
-
-        account_page_response = browser.submit()
-
-        if account_page_response.code != 200:
+        if account_page_response.status_code != 200:
             raise RuntimeError('Logging in returned %d' % response.code)
 
+        warnings.simplefilter('default', UserWarning)
+
     def download_file(self, url, save_to):
-        cookie_string = ''
+        response = self._browser.get(url)
 
-        for cookie in self._cookie_jar:
-            cookie_string += '%s=%s; ' % (cookie.name, cookie.value)
-
-        headers = {'Cookie': cookie_string}
-
-        request = urllib2.Request(url, None, headers)
-        response = urllib2.urlopen(request)
+        if response.status_code != 200:
+            raise RuntimeError('Downloading file returned %d' % response.code)
 
         output = open(save_to, 'wb')
-        output.write(response.read())
+        output.write(response.content)
         output.close()
 
 
@@ -469,22 +455,15 @@ def main():
                 subprocess.call(['touch', episode['filename']])
                 continue
 
-            try:
-                downloader.download_file(episode['file_url'], episode['filename'])
-            except urllib2.HTTPError as http_error:
-                if http_error.code == 404:
-                    print(AnsiEscapeSequences.RED_TEXT % 'HTTP 404 when trying to download %s' % episode['filename'])
-                    continue
-                else:
-                    raise http_error
+            downloader.download_file(episode['file_url'], episode['filename'])
 
             mp3_file = eyed3.load(episode['filename'])
             mp3_file.initTag()
 
-            mp3_file.tag.title = unicode(episode['title'])
+            mp3_file.tag.title = episode['title']
             mp3_file.tag.date = str(episode['release_date'].year)
             mp3_file.tag.artist = u'Hamish & Andy'
-            mp3_file.tag.album = unicode('Podcasts ' + episode['release_date'].strftime('%Y'))
+            mp3_file.tag.album = 'Podcasts ' + episode['release_date'].strftime('%Y')
             mp3_file.tag.track_num = episode['track_number']
             mp3_file.tag.images.set(id3.frames.ImageFrame.MEDIA, image_data, 'image/jpeg')
 
