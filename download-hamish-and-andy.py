@@ -5,6 +5,7 @@ import eyed3
 import json
 import os
 import re
+import requests
 import subprocess
 import sys
 from bs4 import BeautifulSoup
@@ -53,13 +54,6 @@ class HamishAndAndyLibSynParser:
         self._dry_run = dry_run
 
     @staticmethod
-    def web_request(url):
-        request = urllib2.Request(url)
-        response = urllib2.urlopen(request)
-
-        return dict(content=response.read(), code=response.getcode())
-
-    @staticmethod
     def parse_episode(soup):
         episode_data = {}
 
@@ -105,7 +99,9 @@ class HamishAndAndyLibSynParser:
         return episode_data
 
     def resolve_file_url(self, player_url):
-        response = self.web_request(player_url)
+        response = requests.get(player_url)
+        print(response)
+        exit()
 
         if response['code'] != 200:
             raise RuntimeError('Web server returned ' + str(response['code']))
@@ -128,12 +124,12 @@ class HamishAndAndyLibSynParser:
         if self._page_number > self._page_count > 0:
             return False
 
-        response = self.web_request(self.URL + str(self._page_number))
+        response = requests.get(self.URL + str(self._page_number))
 
-        if response['code'] != 200:
-            raise RuntimeError('Web server returned ' + str(response['code']))
+        if response.status_code != 200:
+            raise RuntimeError('Web server returned ' + str(response.status_code))
 
-        soup = BeautifulSoup(response['content'], 'html.parser')
+        soup = BeautifulSoup(response.text, 'html.parser')
 
         if self._page_count == 0:
             pager_element = soup.find('div', {'class': 'pager'})
@@ -147,7 +143,7 @@ class HamishAndAndyLibSynParser:
 
         episodes_soup = soup.findAll('div', {'class': 'libsyn-item'})
 
-        if episodes_soup.count == 0:
+        if len(episodes_soup) == 0:
             return False
 
         for soup in episodes_soup:
