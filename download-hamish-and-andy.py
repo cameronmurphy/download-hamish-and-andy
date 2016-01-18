@@ -445,7 +445,7 @@ def main():
     scrubber = HamishAndAndyPodcastScrubber()
     image_data = None
 
-    if not dry_run_option:
+    if not args.dry_run:
         image_data = artwork_downloader.resolve_and_download()
 
         if args.username is not None and args.password is not None:
