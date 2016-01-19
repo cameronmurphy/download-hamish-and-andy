@@ -383,8 +383,8 @@ class LibSynDownloader:
     def login(self, username, password):
         # https://github.com/hickford/MechanicalSoup/issues/22
         warnings.simplefilter('ignore', UserWarning)
-
         response = self._browser.get(self.LOGIN_URL)
+        warnings.simplefilter('default', UserWarning)
 
         if response.status_code != 200:
             raise RuntimeError('Login page returned %d' % response.code)
@@ -393,12 +393,13 @@ class LibSynDownloader:
         login_form.select('#email')[0]['value'] = username
         login_form.select('#password')[0]['value'] = password
 
+        # https://github.com/hickford/MechanicalSoup/issues/22
+        warnings.simplefilter('ignore', UserWarning)
         account_page_response = self._browser.submit(login_form, self.LOGIN_URL)
+        warnings.simplefilter('default', UserWarning)
 
         if account_page_response.status_code != 200:
             raise RuntimeError('Logging in returned %d' % response.code)
-
-        warnings.simplefilter('default', UserWarning)
 
     def download_file(self, url, save_to):
         response = self._browser.get(url)
