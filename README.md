@@ -11,3 +11,5 @@ A script to download Hamish and Andy podcasts from handa.libsyn.com
 --password    password for my.libsyn.com (only required for premium eps)
 --dry-run     just test things out
 ```
+
+Requires python3, mechanicalsoup and eyed3 (you'll need to clone master and install manually, 0.7.8 doesn't support python3)
